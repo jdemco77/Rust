@@ -7,53 +7,41 @@ fn parse_float_error_to_io_error(err: std::num::ParseFloatError) -> io::Error {
 }
 
 fn find_mean(vec: &[f32]) -> f32 {
+    println!("Findind mean of vector");
+
     let sum: f32 = vec.iter().sum();
     sum / vec.len() as f32
 }
 
 fn find_std(vec: &[f32]) -> f32 {
+    println!("Finding standard deviation of vector");
     let mean = find_mean(vec);
     let variance: f32 = vec.iter().map(|x| (x - mean).powi(2)).sum::<f32>() / vec.len() as f32;
     variance.sqrt()
 }
 
 
-fn invert_matrix(matrix: &[Vec<f32>]) -> Vec<Vec<f32>> {
-    // Implementation of matrix inversion (e.g., using Gauss-Jordan elimination)
-    // This implementation is omitted for brevity. You can use existing crate or library for matrix inversion if needed.
-    // Make sure to handle cases such as singular or non-invertible matrices.
 
-    // Placeholder code
-    matrix.to_vec()
-}
-fn train_linear_regression(x_vector: &[Vec<f32>], y_vector: &[f32]) -> f32 {
-    let num_samples = x_vector.len();
-    let num_features = x_vector[0].len();
+fn train_simple_linear_regression(x_vec: &[f32], y_vec: &[f32]) -> f32 {
+    println!("Beginning training of simple linear regresion model");
 
-    let mut augmented_x = vec![vec![1.0; num_features + 1]; num_samples];
-    for i in 0..num_samples {
-        augmented_x[i][1..].clone_from_slice(&x_vector[i]);
-    }
+    let num_samples = x_vec.len();
 
-    let mut x_transpose_x = vec![vec![0.0; num_features + 1]; num_features + 1];
-    let mut x_transpose_y = vec![0.0; num_features + 1];
+    let x_mean = find_mean(x_vec);
+    let y_mean = find_mean(y_vec);
+
+    let mut numerator = 0.0;
+    let mut denominator = 0.0;
 
     for i in 0..num_samples {
-        for j in 0..=num_features {
-            for k in 0..=num_features {
-                x_transpose_x[j][k] += augmented_x[i][j] * augmented_x[i][k];
-            }
-            x_transpose_y[j] += augmented_x[i][j] * y_vector[i];
-        }
+        numerator += (x_vec[i] - x_mean) * (y_vec[i] - y_mean);
+        denominator += (x_vec[i] - x_mean) * (x_vec[i] - x_mean);
     }
 
-    let x_transpose_x_inv = invert_matrix(&x_transpose_x);
-    let weights = matrix_vector_mul(&x_transpose_x_inv, &x_transpose_y);
-
-    let weight:f32=weights[1]/300.00;  // Return the weight for the first feature (x)
-    weight
+    let slope = numerator / denominator;
+    println!("Found slope");
+    slope
 }
-
 
 fn matrix_vector_mul(matrix: &[Vec<f32>], vector: &[f32]) -> Vec<f32> {
     let num_rows = matrix.len();
@@ -70,7 +58,7 @@ fn matrix_vector_mul(matrix: &[Vec<f32>], vector: &[f32]) -> Vec<f32> {
     result
 }
 
-fn predict_linear_regression(weight: &f32, x: &f32) -> f32 {
+fn predict_simple_linear_regression(weight: &f32, x: &f32) -> f32 {
     let bias: &f32 = weight;
     let prediction: f32 = bias + x * weight;
     println!("{:?}:bias   {:?}:x   {:?}:weight",bias,x,weight);
@@ -119,14 +107,14 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
         .map(|y: &f32| (y - y_mean) / y_std)
         .collect();
 
-    let weight: f32 = train_linear_regression(&[standardized_x_values], &standardized_y_values);
+    let weight: f32 = train_simple_linear_regression(&standardized_x_values, &standardized_y_values);
 
     println!("Learned weights: {:?}", weight);
 
     let new_x: f32 = 22.7; 
 
     // Make the prediction
-    let prediction: f32 = predict_linear_regression(&weight, &new_x);
+    let prediction: f32 = predict_simple_linear_regression(&weight, &new_x);
 
     println!("Predicted y for given x: {:?}   {:?}", prediction, new_x);
 
